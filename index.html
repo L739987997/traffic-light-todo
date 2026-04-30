@@ -1,0 +1,751 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, maximum-scale=2.0">
+  <meta name="theme-color" content="#22c55e">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="待办清单">
+  <meta name="mobile-web-app-capable" content="yes">
+  <title>红黄绿 · 待办清单</title>
+  <link rel="manifest" href="./manifest.webmanifest">
+  <link rel="apple-touch-icon" href="./icons/icon-180.png">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background: #f4f6fa;
+      font-family: system-ui, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+      display: flex;
+      justify-content: center;
+      padding: 1.5rem 1rem 3rem;
+      min-height: 100vh;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 580px;
+    }
+
+    h1 {
+      font-size: 2.2rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      margin-bottom: 1.5rem;
+      color: #1e293b;
+    }
+
+    .card {
+      background: #ffffff;
+      border-radius: 1.5rem;
+      padding: 1.5rem 1.2rem;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.04), 0 4px 8px rgba(0, 0, 0, 0.02);
+      margin-bottom: 1.5rem;
+      transition: all 0.2s ease;
+    }
+
+    .add-form {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      align-items: flex-end;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.3rem;
+      flex: 1 1 140px;
+    }
+
+    .form-group label {
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: #5b6e8c;
+    }
+
+    .form-group input {
+      padding: 0.65rem 0.8rem;
+      border: 1.5px solid #e2e8f0;
+      border-radius: 1rem;
+      font-size: 0.95rem;
+      outline: none;
+      transition: border 0.2s;
+      background: #fafbfc;
+      width: 100%;
+    }
+
+    .form-group input:focus {
+      border-color: #8b9cf7;
+      background: #fff;
+    }
+
+    .color-selector {
+      display: flex;
+      gap: 0.65rem;
+      align-items: center;
+      padding-top: 0.2rem;
+      flex-wrap: wrap;
+    }
+
+    .color-option {
+      display: flex;
+      align-items: center;
+      cursor: pointer;
+    }
+
+    .color-option input {
+      position: absolute;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .color-circle {
+      width: 2.2rem;
+      height: 2.2rem;
+      border-radius: 50%;
+      display: inline-block;
+      border: 2.5px solid transparent;
+      transition: all 0.2s;
+      background: #eee;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+    }
+
+    .color-circle.red {
+      background: #e74c3c;
+    }
+
+    .color-circle.yellow {
+      background: #f1c40f;
+    }
+
+    .color-circle.green {
+      background: #2ecc71;
+    }
+
+    .color-option input:checked + .color-circle {
+      border-color: #1e293b;
+      box-shadow: 0 0 0 3px rgba(30,41,59,0.15);
+      transform: scale(1.08);
+    }
+
+    .btn {
+      background: #1e293b;
+      color: white;
+      font-weight: 600;
+      border: none;
+      border-radius: 1rem;
+      padding: 0.7rem 1.4rem;
+      font-size: 0.95rem;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.1s;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.3rem;
+      white-space: nowrap;
+    }
+
+    .btn:hover {
+      background: #334155;
+    }
+
+    .btn:active {
+      transform: scale(0.97);
+    }
+
+    .btn-secondary {
+      background: transparent;
+      border: 1.5px solid #cbd5e1;
+      color: #334155;
+      padding: 0.5rem 1rem;
+      font-size: 0.85rem;
+    }
+
+    .btn-secondary:hover {
+      background: #f1f5f9;
+    }
+
+    .section-title {
+      font-size: 1.1rem;
+      font-weight: 650;
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      color: #1e293b;
+    }
+
+    .task-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.65rem;
+    }
+
+    .task-item {
+      display: flex;
+      align-items: center;
+      background: #ffffff;
+      border: 1px solid #edf2f7;
+      border-radius: 1.2rem;
+      padding: 0.8rem 0.9rem;
+      gap: 0.7rem;
+      transition: background 0.2s, box-shadow 0.2s;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+      position: relative;
+    }
+
+    .task-item.overdue {
+      background: #fff9f7;
+      border-color: #ffdfd4;
+    }
+
+    .color-indicator {
+      width: 0.55rem;
+      min-width: 0.55rem;
+      height: 2.5rem;
+      border-radius: 0.35rem;
+      background: #ccc;
+    }
+
+    .color-indicator.red {
+      background: #e74c3c;
+    }
+
+    .color-indicator.yellow {
+      background: #f1c40f;
+    }
+
+    .color-indicator.green {
+      background: #2ecc71;
+    }
+
+    .task-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 0.15rem;
+      word-break: break-word;
+    }
+
+    .task-title {
+      font-weight: 540;
+      font-size: 1rem;
+      color: #0f172a;
+    }
+
+    .task-meta {
+      font-size: 0.75rem;
+      color: #5f6c80;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      align-items: center;
+    }
+
+    .badge {
+      background: #f1f5f9;
+      padding: 0.15rem 0.55rem;
+      border-radius: 2rem;
+      font-weight: 550;
+      font-size: 0.7rem;
+      letter-spacing: 0.02em;
+    }
+
+    .badge.overdue-badge {
+      background: #fee2e2;
+      color: #b91c1c;
+      font-weight: 600;
+    }
+
+    .badge.today-badge {
+      background: #fef9c3;
+      color: #854d0e;
+    }
+
+    .badge.completed-badge {
+      background: #dcfce7;
+      color: #166534;
+    }
+
+    .task-actions {
+      display: flex;
+      gap: 0.3rem;
+      align-items: center;
+    }
+
+    .icon-btn {
+      background: transparent;
+      border: none;
+      font-size: 1.25rem;
+      width: 2.3rem;
+      height: 2.3rem;
+      border-radius: 0.8rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: background 0.2s;
+      color: #4b5563;
+    }
+
+    .icon-btn:hover {
+      background: #f1f5f9;
+    }
+
+    .icon-btn.done-btn {
+      color: #16a34a;
+      font-weight: bold;
+    }
+
+    .icon-btn.undo-btn {
+      color: #d97706;
+    }
+
+    .icon-btn.delete-btn {
+      color: #9ca3af;
+    }
+
+    .icon-btn.delete-btn:hover {
+      background: #fee2e2;
+      color: #b91c1c;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 2rem 1rem;
+      color: #8b98af;
+      font-size: 0.95rem;
+    }
+
+    .install-note {
+      display: none;
+      margin: -0.8rem 0 1rem;
+      color: #5b6e8c;
+      font-size: 0.82rem;
+      line-height: 1.45;
+    }
+
+    .install-note.visible {
+      display: block;
+    }
+
+    .history-row {
+      display: flex;
+      gap: 0.6rem;
+      align-items: center;
+      flex-wrap: wrap;
+      margin-top: 0.5rem;
+    }
+
+    .history-row input {
+      padding: 0.55rem 0.75rem;
+      border: 1.5px solid #e2e8f0;
+      border-radius: 1rem;
+      font-size: 0.9rem;
+      background: #fafbfc;
+    }
+
+    hr {
+      border: none;
+      border-top: 1px solid #e9eef3;
+      margin: 1.5rem 0 1rem;
+    }
+
+    @media (max-width: 450px) {
+      .add-form {
+        flex-direction: column;
+        align-items: stretch;
+      }
+      .btn {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>📋 待办清单</h1>
+    <div id="installNote" class="install-note">已支持离线使用。iPhone 上用 Safari 打开后，点分享按钮，选择“添加到主屏幕”。</div>
+
+    <!-- 添加任务卡片 -->
+    <div class="card">
+      <div class="add-form">
+        <div class="form-group" style="flex: 2 1 200px;">
+          <label>任务名称</label>
+          <input type="text" id="taskTitleInput" placeholder="写一个待办事项..." autocomplete="off">
+        </div>
+        <div class="form-group">
+          <label>分类颜色</label>
+          <div class="color-selector" id="colorSelector">
+            <label class="color-option">
+              <input type="radio" name="taskColor" value="red">
+              <span class="color-circle red"></span>
+            </label>
+            <label class="color-option">
+              <input type="radio" name="taskColor" value="yellow">
+              <span class="color-circle yellow"></span>
+            </label>
+            <label class="color-option">
+              <input type="radio" name="taskColor" value="green" checked>
+              <span class="color-circle green"></span>
+            </label>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>截止日期 (可选)</label>
+          <input type="date" id="dueDateInput">
+        </div>
+        <button class="btn" id="addTaskBtn">➕ 添加</button>
+      </div>
+    </div>
+
+    <!-- 待办事项（未完成） -->
+    <div class="card">
+      <div class="section-title">
+        <span>📌 待办事项</span>
+      </div>
+      <div id="incompleteList" class="task-list">
+        <div class="empty-state">✨ 暂无待办，添加一个吧</div>
+      </div>
+    </div>
+
+    <!-- 今日完成 -->
+    <div class="card">
+      <div class="section-title">
+        <span>✅ 今日完成</span>
+        <span style="font-size:0.8rem; font-weight:400; color:#5b6e8c;" id="todayDateLabel"></span>
+      </div>
+      <div id="completedTodayList" class="task-list">
+        <div class="empty-state">🕒 今天还没有完成的任务</div>
+      </div>
+    </div>
+
+    <!-- 查看历史 -->
+    <div class="card">
+      <div class="section-title" style="cursor: pointer; user-select: none;" id="historyToggle">
+        <span>📅 查看历史完成</span>
+        <span style="font-size:1.2rem;">&#9662;</span>
+      </div>
+      <div id="historyPanel" style="display: none;">
+        <div class="history-row">
+          <input type="date" id="historyDateInput">
+          <button class="btn btn-secondary" id="loadHistoryBtn">查看</button>
+        </div>
+        <div id="historyList" class="task-list" style="margin-top: 0.8rem;"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    (function() {
+      // ---------- 工具函数 ----------
+      const STORAGE_KEY = 'traffic_light_todo_app';
+
+      function getLocalDateString() {
+        const d = new Date();
+        const year = d.getFullYear();
+        const month = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+      }
+
+      function escapeHtml(text) {
+        return String(text)
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;');
+      }
+
+      // ---------- 数据管理 ----------
+      let tasks = [];
+
+      function loadTasks() {
+        const stored = localStorage.getItem(STORAGE_KEY);
+        if (stored) {
+          try {
+            tasks = JSON.parse(stored);
+          } catch (e) {
+            tasks = [];
+          }
+        } else {
+          tasks = [];
+        }
+      }
+
+      function saveTasks() {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks));
+      }
+
+      // ---------- 核心逻辑 ----------
+      function addTask(title, color, dueDate) {
+        const trimmed = title.trim();
+        if (!trimmed) {
+          alert('请输入任务名称');
+          return false;
+        }
+        const newTask = {
+          id: Date.now(),
+          title: trimmed,
+          color: color,           // 'red' | 'yellow' | 'green'
+          dueDate: dueDate || null, // 'YYYY-MM-DD' 或 null
+          completed: false,
+          completedDate: null,
+          createdAt: getLocalDateString()
+        };
+        tasks.push(newTask);
+        saveTasks();
+        return true;
+      }
+
+      function toggleCompleteTask(id) {
+        const task = tasks.find(t => t.id === id);
+        if (!task) return;
+        if (task.completed) {
+          // 撤销完成 -> 变回未完成
+          task.completed = false;
+          task.completedDate = null;
+        } else {
+          // 标记完成
+          task.completed = true;
+          task.completedDate = getLocalDateString();
+        }
+        saveTasks();
+      }
+
+      function deleteTask(id) {
+        tasks = tasks.filter(t => t.id !== id);
+        saveTasks();
+      }
+
+      // ---------- 排序与筛选 ----------
+      function getIncompleteTasksSorted(todayStr) {
+        return tasks
+          .filter(t => !t.completed)
+          .sort((a, b) => {
+            const priority = (task) => {
+              if (task.dueDate) {
+                if (task.dueDate < todayStr) return 0; // 逾期
+                if (task.dueDate === todayStr) return 1; // 今天到期
+                return 2; // 未来
+              }
+              return 3; // 无截止
+            };
+            const pa = priority(a);
+            const pb = priority(b);
+            if (pa !== pb) return pa - pb;
+            // 同优先级按创建时间升序（先创建的先显示）
+            return (a.createdAt || '').localeCompare(b.createdAt || '');
+          });
+      }
+
+      function getCompletedTodayTasks(todayStr) {
+        return tasks.filter(t => t.completed && t.completedDate === todayStr);
+      }
+
+      function getCompletedByDate(dateStr) {
+        return tasks.filter(t => t.completed && t.completedDate === dateStr);
+      }
+
+      // ---------- 渲染 ----------
+      const incompleteListEl = document.getElementById('incompleteList');
+      const completedTodayListEl = document.getElementById('completedTodayList');
+      const todayDateLabelEl = document.getElementById('todayDateLabel');
+      const historyListEl = document.getElementById('historyList');
+      const historyDateInput = document.getElementById('historyDateInput');
+
+      function renderTaskItem(task, showUndo = false, showDelete = true) {
+        const colorClass = ['red', 'yellow', 'green'].includes(task.color) ? task.color : 'green';
+        const todayStr = getLocalDateString();
+        let dueHtml = '';
+        let overdueClass = '';
+        if (task.dueDate && !task.completed) {
+          if (task.dueDate < todayStr) {
+            dueHtml = `<span class="badge overdue-badge">⏰ 逾期 ${escapeHtml(task.dueDate)}</span>`;
+            overdueClass = 'overdue';
+          } else if (task.dueDate === todayStr) {
+            dueHtml = `<span class="badge today-badge">📅 今天到期</span>`;
+          } else {
+            dueHtml = `<span class="badge">📆 ${escapeHtml(task.dueDate)}</span>`;
+          }
+        } else if (task.dueDate && task.completed) {
+          dueHtml = `<span class="badge completed-badge">✔️ 截止 ${escapeHtml(task.dueDate)}</span>`;
+        }
+
+        const titleStyle = task.completed ? 'text-decoration: line-through; opacity: 0.7;' : '';
+
+        const actionsHtml = () => {
+          let btns = '';
+          if (task.completed && showUndo) {
+            btns += `<button class="icon-btn undo-btn" title="撤销完成" data-action="undo" data-id="${task.id}">↩️</button>`;
+          } else if (!task.completed) {
+            btns += `<button class="icon-btn done-btn" title="标记完成" data-action="complete" data-id="${task.id}">✔️</button>`;
+          }
+          if (showDelete) {
+            btns += `<button class="icon-btn delete-btn" title="删除任务" data-action="delete" data-id="${task.id}">🗑️</button>`;
+          }
+          return btns;
+        };
+
+        return `
+          <div class="task-item ${overdueClass}" data-task-id="${task.id}">
+            <div class="color-indicator ${colorClass}"></div>
+            <div class="task-content">
+              <span class="task-title" style="${titleStyle}">${escapeHtml(task.title)}</span>
+              <div class="task-meta">
+                ${dueHtml}
+                ${task.completed ? `<span class="badge completed-badge">✅ 完成日 ${escapeHtml(task.completedDate)}</span>` : ''}
+              </div>
+            </div>
+            <div class="task-actions">
+              ${actionsHtml()}
+            </div>
+          </div>
+        `;
+      }
+
+      function renderAll() {
+        const todayStr = getLocalDateString();
+        todayDateLabelEl.textContent = todayStr;
+
+        // 未完成列表
+        const incomplete = getIncompleteTasksSorted(todayStr);
+        if (incomplete.length === 0) {
+          incompleteListEl.innerHTML = '<div class="empty-state">✨ 暂无待办，添加一个吧</div>';
+        } else {
+          incompleteListEl.innerHTML = incomplete.map(t => renderTaskItem(t, false, true)).join('');
+        }
+
+        // 今日完成列表
+        const completedToday = getCompletedTodayTasks(todayStr);
+        if (completedToday.length === 0) {
+          completedTodayListEl.innerHTML = '<div class="empty-state">🕒 今天还没有完成的任务</div>';
+        } else {
+          completedTodayListEl.innerHTML = completedToday.map(t => renderTaskItem(t, true, true)).join('');
+        }
+
+        // 历史面板如果打开则重新加载对应日期
+        if (historyPanel.style.display !== 'none' && historyDateInput.value) {
+          renderHistory(historyDateInput.value);
+        }
+      }
+
+      function renderHistory(dateStr) {
+        const completed = getCompletedByDate(dateStr);
+        if (!completed.length) {
+          historyListEl.innerHTML = '<div class="empty-state">📭 该日期没有已完成任务</div>';
+        } else {
+          historyListEl.innerHTML = completed.map(t => renderTaskItem(t, false, true)).join('');
+        }
+      }
+
+      // ---------- 事件绑定 ----------
+      function setupEventDelegation() {
+        document.addEventListener('click', (e) => {
+          const target = e.target.closest('button');
+          if (!target) return;
+          const action = target.dataset.action;
+          const id = target.dataset.id ? Number(target.dataset.id) : null;
+
+          if (action === 'complete' && id) {
+            toggleCompleteTask(id);
+            renderAll();
+          } else if (action === 'undo' && id) {
+            toggleCompleteTask(id);
+            renderAll();
+          } else if (action === 'delete' && id) {
+            if (confirm('确定要删除这个任务吗？')) {
+              deleteTask(id);
+              renderAll();
+            }
+          }
+        });
+
+        document.getElementById('addTaskBtn').addEventListener('click', () => {
+          const titleInput = document.getElementById('taskTitleInput');
+          const dueInput = document.getElementById('dueDateInput');
+          const colorRadio = document.querySelector('input[name="taskColor"]:checked');
+          const color = colorRadio ? colorRadio.value : 'green';
+          const success = addTask(titleInput.value, color, dueInput.value);
+          if (success) {
+            titleInput.value = '';
+            dueInput.value = '';
+            // 保持颜色选中不变
+            renderAll();
+          }
+        });
+
+        // 回车添加
+        document.getElementById('taskTitleInput').addEventListener('keypress', (e) => {
+          if (e.key === 'Enter') {
+            document.getElementById('addTaskBtn').click();
+          }
+        });
+
+        // 历史面板切换
+        const historyToggle = document.getElementById('historyToggle');
+        const historyPanel = document.getElementById('historyPanel');
+        historyToggle.addEventListener('click', () => {
+          if (historyPanel.style.display === 'none') {
+            historyPanel.style.display = 'block';
+            historyToggle.querySelector('span:last-child').innerHTML = '&#9652;';
+            // 默认填入今天
+            if (!historyDateInput.value) {
+              historyDateInput.value = getLocalDateString();
+            }
+            renderHistory(historyDateInput.value);
+          } else {
+            historyPanel.style.display = 'none';
+            historyToggle.querySelector('span:last-child').innerHTML = '&#9662;';
+          }
+        });
+
+        document.getElementById('loadHistoryBtn').addEventListener('click', () => {
+          const dateVal = historyDateInput.value;
+          if (!dateVal) {
+            alert('请选择一个日期');
+            return;
+          }
+          renderHistory(dateVal);
+        });
+      }
+
+      // ---------- 初始化 ----------
+      function init() {
+        loadTasks();
+        // 确保历史日期输入默认为今天
+        historyDateInput.value = getLocalDateString();
+        renderAll();
+        setupEventDelegation();
+      }
+
+      init();
+
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('./sw.js').then(() => {
+            const installNote = document.getElementById('installNote');
+            if (installNote) installNote.classList.add('visible');
+          }).catch(() => {
+            const installNote = document.getElementById('installNote');
+            if (installNote) {
+              installNote.textContent = '当前打开方式不支持离线缓存。请通过本地服务器或 HTTPS 网址打开后再添加到主屏幕。';
+              installNote.classList.add('visible');
+            }
+          });
+        });
+      }
+    })();
+  </script>
+</body>
+</html>
