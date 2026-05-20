@@ -1,4 +1,4 @@
-const CACHE_NAME = 'traffic-light-todo-v1';
+const CACHE_NAME = 'traffic-light-todo-v10';
 const APP_ASSETS = [
   './',
   './index.html',
